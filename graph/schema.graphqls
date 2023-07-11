@@ -1,0 +1,18 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+
+
+input NewUser {
+    userId: String!
+    username : String!
+    password : String!
+    confirmPassword : String!
+    role : String!
+}
+
+type LoginResponse {
+    message : String!
+    token : String!
+}

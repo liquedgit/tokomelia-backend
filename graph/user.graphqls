@@ -1,0 +1,16 @@
+type User {
+    id: ID!
+    username: String!
+    role : String!
+}
+
+type Query {
+    GetAllUser : [User]!
+    GetUser(userid : String!) : User!
+    LoginAccount(userId : String!, password : String!) : LoginResponse
+}
+
+
+type Mutation {
+    createNewUser(input: NewUser!): User!
+}
