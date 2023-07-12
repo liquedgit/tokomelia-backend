@@ -6,29 +6,14 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/liquedgit/tokoMeLia/graph/model"
-	"github.com/vektah/gqlparser/v2/gqlerror"
+	"github.com/liquedgit/tokoMeLia/service"
 )
 
 // CreateNewUser is the resolver for the createNewUser field.
 func (r *mutationResolver) CreateNewUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	if input.Password != input.ConfirmPassword {
-		return nil, gqlerror.Errorf("Password not match")
-	}
-
-	newUser := &model.User{
-		ID:       uuid.NewString(),
-		Username: input.Username,
-		Password: input.Password,
-		Role:     input.Role,
-	}
-
-	res := r.DB.Save(newUser)
-
-	return newUser, res.Error
+	return service.UserCreate(ctx, input)
 }
 
 // GetAllUser is the resolver for the GetAllUser field.
@@ -38,14 +23,13 @@ func (r *queryResolver) GetAllUser(ctx context.Context) ([]*model.User, error) {
 }
 
 // GetUser is the resolver for the GetUser field.
-func (r *queryResolver) GetUser(ctx context.Context, userid string) (*model.User, error) {
-	var user *model.User
-	return user, r.DB.First(&user, "username = ?", userid).Error
+func (r *queryResolver) GetUser(ctx context.Context, username string) (*model.User, error) {
+	return service.UserGetByUsername(ctx, username)
 }
 
 // LoginAccount is the resolver for the LoginAccount field.
-func (r *queryResolver) LoginAccount(ctx context.Context) (*model.LoginResponse, error) {
-	panic(fmt.Errorf("not implemented: LoginAccount - LoginAccount"))
+func (r *queryResolver) LoginAccount(ctx context.Context, username string, password string) (*model.LoginResponse, error) {
+	return service.UserLogin(ctx, username, password)
 }
 
 // Mutation returns MutationResolver implementation.

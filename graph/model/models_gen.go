@@ -5,6 +5,7 @@ package model
 type NewUser struct {
 	UserID          string `json:"userId"`
 	Username        string `json:"username"`
+	Email           string `json:"email"`
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirmPassword"`
 	Role            string `json:"role"`

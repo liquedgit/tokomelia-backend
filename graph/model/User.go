@@ -2,9 +2,10 @@ package model
 
 type User struct {
 	ID       string `json:"id"`
-	Username string `json:"username" gorm:"unique"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Username string `json:"username" gorm:"unique;not null"`
+	Email    string `json:"email" gorm:"unique;not null"`
+	Password string `json:"password" gorm:"not null;"`
+	Role     string `json:"role" gorm:"not null;"`
 }
 
 type LoginResponse struct {

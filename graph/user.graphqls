@@ -1,13 +1,19 @@
+directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+# new directive
+directive @auth on FIELD_DEFINITION
+
 type User {
     id: ID!
     username: String!
+    email : String!
     role : String!
 }
 
 type Query {
-    GetAllUser : [User]!
-    GetUser(userid : String!) : User!
-    LoginAccount(userId : String!, password : String!) : LoginResponse
+    GetAllUser : [User]! @auth
+    GetUser(username : String!) : User! @auth
+    LoginAccount(username : String!, password : String!) : LoginResponse!
 }
 
 
