@@ -9,6 +9,7 @@ import (
 	"github.com/liquedgit/tokoMeLia/graph"
 	"github.com/liquedgit/tokoMeLia/helper"
 	"github.com/liquedgit/tokoMeLia/middlewares"
+	"github.com/rs/cors"
 	"log"
 	"net/http"
 )
@@ -25,6 +26,11 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Use(middlewares.AuthMiddleware)
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowCredentials: true,
+		Debug:            true,
+	}).Handler)
 
 	c := graph.Config{Resolvers: &graph.Resolver{
 		DB: Database.GetInstance(),
