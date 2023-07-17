@@ -17,3 +17,7 @@ type LoginResponse {
     message : String!
     token : String!
 }
+
+type DefaultResponse{
+    message : String!
+}

@@ -1,5 +1,5 @@
 directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
+scalar Time
 # new directive
 directive @auth on FIELD_DEFINITION
 
@@ -8,6 +8,8 @@ type User {
     username: String!
     email : String!
     role : String!
+    isVerified : Boolean!
+    CreatedAt : Time!
 }
 
 type Query {
@@ -19,4 +21,5 @@ type Query {
 
 type Mutation {
     createNewUser(input: NewUser!): User!
+    verifyEmail(token : String!) : DefaultResponse!
 }

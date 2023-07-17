@@ -2,6 +2,10 @@
 
 package model
 
+type DefaultResponse struct {
+	Message string `json:"message"`
+}
+
 type NewUser struct {
 	UserID          string `json:"userId"`
 	Username        string `json:"username"`

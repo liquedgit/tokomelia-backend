@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+
 	"github.com/liquedgit/tokoMeLia/graph/model"
 	"github.com/liquedgit/tokoMeLia/service"
 )
@@ -13,6 +14,11 @@ import (
 // CreateNewUser is the resolver for the createNewUser field.
 func (r *mutationResolver) CreateNewUser(ctx context.Context, input model.NewUser) (*model.User, error) {
 	return service.UserCreate(ctx, input)
+}
+
+// VerifyEmail is the resolver for the verifyEmail field.
+func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (*model.DefaultResponse, error) {
+	return service.VerifyEmail(ctx, token)
 }
 
 // GetAllUser is the resolver for the GetAllUser field.
