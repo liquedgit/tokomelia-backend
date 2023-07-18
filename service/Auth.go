@@ -12,7 +12,7 @@ func UserLogin(ctx context.Context, username string, password string) (*model.Lo
 	getUser, err := UserGetByUsername(ctx, username)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, &gqlerror.Error{Message: "Invalid username or password"}
+			return nil, &gqlerror.Error{Message: "Invalid username or your account may not be activated"}
 		}
 		return nil, err
 	}

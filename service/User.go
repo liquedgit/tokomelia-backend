@@ -72,7 +72,7 @@ func UserCreate(ctx context.Context, input model.NewUser) (*model.User, error) {
 func UserGetByUsername(ctx context.Context, username string) (*model.User, error) {
 	db := Database.GetInstance()
 	var user *model.User
-	return user, db.First(&user, "username = ?", username).Error
+	return user, db.First(&user, "username = ? AND is_verified = true", username).Error
 }
 
 func UserGetByEmail(ctx context.Context, email string) (*model.User, error) {
