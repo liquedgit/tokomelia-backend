@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/liquedgit/tokoMeLia/Database"
@@ -12,7 +13,10 @@ import (
 	"time"
 )
 
-func VerifyEmail(ctx context.Context, token string) (*model.DefaultResponse, error) {
+func VerifyEmail(ctx context.Context, encodedToken string) (*model.DefaultResponse, error) {
+	unescapedToken, err := url.QueryUnescape(encodedToken)
+	tokenByte, err := base64.StdEncoding.DecodeString(unescapedToken)
+	token := string(tokenByte)
 	if token == "" {
 		return nil, errors.New("Error While Verifying Email")
 	}
@@ -57,11 +61,11 @@ func UserCreate(ctx context.Context, input model.NewUser) (*model.User, error) {
 	if err != nil {
 		panic("Error Occured")
 	}
-
-	encodedToken := url.QueryEscape(token)
-	verifyEmailLink := "http://localhost:5173/verify/" + encodedToken
+	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
+	escapedToken := url.QueryEscape(encodedToken)
+	verifyEmailLink := "http://localhost:5173/verify/" + escapedToken
 	SendMail(verifyEmailLink, input.Email)
-	
+
 	return user, res.Error
 }
 
