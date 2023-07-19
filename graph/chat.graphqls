@@ -1,0 +1,25 @@
+
+
+extend type Query {
+    GetAllChatData(chat_id : String) : ChatDetails! @auth
+}
+
+extend type Mutation{
+    CreateNewMessage(message : NewMessage!) : ChatDetails @auth
+}
+
+type ChatHeader{
+    chat_id : String!
+}
+
+input NewMessage{
+    chat_id : String!,
+    message : String!
+}
+
+type ChatDetails{
+    chat : ChatHeader! @goField(forceResolver: true)
+    sender : User! @goField(forceResolver: true)
+    message : String!
+}
+

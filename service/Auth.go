@@ -21,7 +21,7 @@ func UserLogin(ctx context.Context, username string, password string) (*model.Lo
 		return nil, err
 	}
 
-	token, err := GenerateToken(ctx, getUser.Username, getUser.Role)
+	token, err := GenerateToken(ctx, getUser.ID, getUser.Username, getUser.Role)
 	if err != nil {
 		return nil, err
 	}

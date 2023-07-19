@@ -57,7 +57,7 @@ func UserCreate(ctx context.Context, input model.NewUser) (*model.User, error) {
 	}
 	res := db.Save(&user)
 
-	token, err := GenerateToken(ctx, input.Username, input.Role)
+	token, err := GenerateToken(ctx, user.ID, user.Username, user.Role)
 	if err != nil {
 		panic("Error Occured")
 	}
@@ -78,5 +78,11 @@ func UserGetByUsername(ctx context.Context, username string) (*model.User, error
 func UserGetByEmail(ctx context.Context, email string) (*model.User, error) {
 	db := Database.GetInstance()
 	var user *model.User
-	return user, db.First(&user, "email = ?", email).Error
+	return user, db.First(&user, "email = ? AND is_verified = true", email).Error
+}
+
+func UserGetByID(ctx context.Context, id string) (*model.User, error) {
+	db := Database.GetInstance()
+	var user *model.User
+	return user, db.First(&user, "id = ?", id).Error
 }

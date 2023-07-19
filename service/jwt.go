@@ -11,15 +11,17 @@ import (
 type JwtCustomClaim struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
+	UserId   string `json:"user_id"`
 	jwt.StandardClaims
 }
 
 var jwtSecret = []byte(helper.GoDotEnvVariables("SECRET_JWT"))
 
-func GenerateToken(ctx context.Context, username string, role string) (string, error) {
+func GenerateToken(ctx context.Context, id string, username string, role string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &JwtCustomClaim{
 		Username: username,
 		Role:     role,
+		UserId:   id,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 			IssuedAt:  time.Now().Unix(),

@@ -6,6 +6,11 @@ type DefaultResponse struct {
 	Message string `json:"message"`
 }
 
+type NewMessage struct {
+	ChatID  string `json:"chat_id"`
+	Message string `json:"message"`
+}
+
 type NewUser struct {
 	UserID          string `json:"userId"`
 	Username        string `json:"username"`
