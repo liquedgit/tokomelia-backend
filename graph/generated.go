@@ -74,7 +74,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllChatData func(childComplexity int, chatID *string) int
+		GetAllChatData func(childComplexity int, chatID string) int
 		GetAllUser     func(childComplexity int) int
 		GetUser        func(childComplexity int, username string) int
 		LoginAccount   func(childComplexity int, username string, password string) int
@@ -103,7 +103,7 @@ type QueryResolver interface {
 	GetAllUser(ctx context.Context) ([]*model.User, error)
 	GetUser(ctx context.Context, username string) (*model.User, error)
 	LoginAccount(ctx context.Context, username string, password string) (*model.LoginResponse, error)
-	GetAllChatData(ctx context.Context, chatID *string) (*model.ChatDetails, error)
+	GetAllChatData(ctx context.Context, chatID string) ([]*model.ChatDetails, error)
 }
 
 type executableSchema struct {
@@ -216,7 +216,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetAllChatData(childComplexity, args["chat_id"].(*string)), true
+		return e.complexity.Query.GetAllChatData(childComplexity, args["chat_id"].(string)), true
 
 	case "Query.GetAllUser":
 		if e.complexity.Query.GetAllUser == nil {
@@ -467,10 +467,10 @@ func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context,
 func (ec *executionContext) field_Query_GetAllChatData_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["chat_id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chat_id"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1348,7 +1348,7 @@ func (ec *executionContext) _Query_GetAllChatData(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().GetAllChatData(rctx, fc.Args["chat_id"].(*string))
+			return ec.resolvers.Query().GetAllChatData(rctx, fc.Args["chat_id"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Auth == nil {
@@ -1364,24 +1364,21 @@ func (ec *executionContext) _Query_GetAllChatData(ctx context.Context, field gra
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*model.ChatDetails); ok {
+		if data, ok := tmp.([]*model.ChatDetails); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/liquedgit/tokoMeLia/graph/model.ChatDetails`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/liquedgit/tokoMeLia/graph/model.ChatDetails`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.ChatDetails)
+	res := resTmp.([]*model.ChatDetails)
 	fc.Result = res
-	return ec.marshalNChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx, field.Selections, res)
+	return ec.marshalOChatDetails2ᚕᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetailsᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_GetAllChatData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4090,9 +4087,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_GetAllChatData(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -4538,10 +4532,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNChatDetails2githubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx context.Context, sel ast.SelectionSet, v model.ChatDetails) graphql.Marshaler {
-	return ec._ChatDetails(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx context.Context, sel ast.SelectionSet, v *model.ChatDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -4978,6 +4968,53 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOChatDetails2ᚕᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetailsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ChatDetails) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx context.Context, sel ast.SelectionSet, v *model.ChatDetails) graphql.Marshaler {

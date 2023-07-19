@@ -11,3 +11,9 @@ func GetChatID(ctx context.Context, id string) (*model.ChatHeader, error) {
 	var chat *model.ChatHeader
 	return chat, db.First(&chat, "chat_id = ?", id).Error
 }
+
+func GetAllChatByID(ctx context.Context, chatId string) ([]*model.ChatDetails, error) {
+	db := Database.GetInstance()
+	var chatData []*model.ChatDetails
+	return chatData, db.Find(&chatData, "chat_id = ?", chatId).Error
+}

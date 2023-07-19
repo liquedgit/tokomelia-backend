@@ -1,7 +1,7 @@
 
 
 extend type Query {
-    GetAllChatData(chat_id : String) : ChatDetails! @auth
+    GetAllChatData(chat_id : String!) : [ChatDetails!] @auth
 }
 
 extend type Mutation{

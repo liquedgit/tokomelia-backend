@@ -6,12 +6,11 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/liquedgit/tokoMeLia/middlewares"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/liquedgit/tokoMeLia/graph/model"
+	"github.com/liquedgit/tokoMeLia/middlewares"
 	"github.com/liquedgit/tokoMeLia/service"
 )
 
@@ -44,12 +43,11 @@ func (r *mutationResolver) CreateNewMessage(ctx context.Context, message model.N
 	}
 
 	return newMessage, r.DB.Save(&newMessage).Error
-
 }
 
 // GetAllChatData is the resolver for the GetAllChatData field.
-func (r *queryResolver) GetAllChatData(ctx context.Context, chatID *string) (*model.ChatDetails, error) {
-	panic(fmt.Errorf("not implemented: GetAllChatData - GetAllChatData"))
+func (r *queryResolver) GetAllChatData(ctx context.Context, chatID string) ([]*model.ChatDetails, error) {
+	return service.GetAllChatByID(ctx, chatID)
 }
 
 // ChatDetails returns ChatDetailsResolver implementation.
