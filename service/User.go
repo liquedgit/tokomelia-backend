@@ -29,9 +29,9 @@ func VerifyEmail(ctx context.Context, encodedToken string) (*model.DefaultRespon
 	customClaim, _ := validate.Claims.(*JwtCustomClaim)
 	username := customClaim.Username
 	user, err := UserGetByUsername(ctx, username)
-	if err != nil {
+	if err != nil || user.IsVerified {
 		panic(customClaim.Username)
-		return nil, errors.New(err.Error())
+		return nil, errors.New("Error has occured")
 	}
 	user.IsVerified = true
 	db := Database.GetInstance()
@@ -72,7 +72,7 @@ func UserCreate(ctx context.Context, input model.NewUser) (*model.User, error) {
 func UserGetByUsername(ctx context.Context, username string) (*model.User, error) {
 	db := Database.GetInstance()
 	var user *model.User
-	return user, db.First(&user, "username = ? AND is_verified = true", username).Error
+	return user, db.First(&user, "username = ?", username).Error
 }
 
 func UserGetByEmail(ctx context.Context, email string) (*model.User, error) {

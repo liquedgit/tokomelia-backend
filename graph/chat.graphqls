@@ -5,7 +5,11 @@ extend type Query {
 }
 
 extend type Mutation{
-    CreateNewMessage(message : NewMessage!) : ChatDetails @auth
+    CreateNewMessage(message : NewMessage!) : ChatDetails! @auth
+}
+
+type Subscription{
+    GetChatData(chat_id : String!) : [ChatDetails!] @auth
 }
 
 type ChatHeader{

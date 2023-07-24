@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +28,8 @@ func (r *chatDetailsResolver) Sender(ctx context.Context, obj *model.ChatDetails
 // CreateNewMessage is the resolver for the CreateNewMessage field.
 func (r *mutationResolver) CreateNewMessage(ctx context.Context, message model.NewMessage) (*model.ChatDetails, error) {
 	var header *model.ChatHeader
-	if r.DB.First(&header).Error != nil {
+	if r.DB.First(&header, "chat_id = ?", message.ChatID).Error != nil {
+
 		//no header found (no chat available)
 		header = &model.ChatHeader{ChatID: uuid.NewString()}
 		r.DB.Save(&header)
@@ -50,7 +52,33 @@ func (r *queryResolver) GetAllChatData(ctx context.Context, chatID string) ([]*m
 	return service.GetAllChatByID(ctx, chatID)
 }
 
+// GetChatData is the resolver for the GetChatData field.
+func (r *subscriptionResolver) GetChatData(ctx context.Context, chatID string) (<-chan []*model.ChatDetails, error) {
+	ch := make(chan []*model.ChatDetails)
+	go func() {
+		for {
+			var newChatData []*model.ChatDetails
+			r.DB.Find(&newChatData, "chat_id = ?", chatID)
+
+			select {
+			case <-ctx.Done():
+				fmt.Println("Subscription Closed")
+				return
+
+			case ch <- newChatData:
+
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // ChatDetails returns ChatDetailsResolver implementation.
 func (r *Resolver) ChatDetails() ChatDetailsResolver { return &chatDetailsResolver{r} }
 
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
 type chatDetailsResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

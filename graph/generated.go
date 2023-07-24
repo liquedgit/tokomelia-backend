@@ -8,6 +8,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -41,6 +42,7 @@ type ResolverRoot interface {
 	ChatDetails() ChatDetailsResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -80,6 +82,10 @@ type ComplexityRoot struct {
 		LoginAccount   func(childComplexity int, username string, password string) int
 	}
 
+	Subscription struct {
+		GetChatData func(childComplexity int, chatID string) int
+	}
+
 	User struct {
 		CreatedAt  func(childComplexity int) int
 		Email      func(childComplexity int) int
@@ -104,6 +110,9 @@ type QueryResolver interface {
 	GetUser(ctx context.Context, username string) (*model.User, error)
 	LoginAccount(ctx context.Context, username string, password string) (*model.LoginResponse, error)
 	GetAllChatData(ctx context.Context, chatID string) ([]*model.ChatDetails, error)
+}
+type SubscriptionResolver interface {
+	GetChatData(ctx context.Context, chatID string) (<-chan []*model.ChatDetails, error)
 }
 
 type executableSchema struct {
@@ -249,6 +258,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.LoginAccount(childComplexity, args["username"].(string), args["password"].(string)), true
 
+	case "Subscription.GetChatData":
+		if e.complexity.Subscription.GetChatData == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_GetChatData_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.GetChatData(childComplexity, args["chat_id"].(string)), true
+
 	case "User.CreatedAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -344,6 +365,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -530,6 +568,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_GetChatData_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["chat_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chat_id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["chat_id"] = arg0
 	return args, nil
 }
 
@@ -1066,11 +1119,14 @@ func (ec *executionContext) _Mutation_CreateNewMessage(ctx context.Context, fiel
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.ChatDetails)
 	fc.Result = res
-	return ec.marshalOChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx, field.Selections, res)
+	return ec.marshalNChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_CreateNewMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1538,6 +1594,80 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_GetChatData(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_GetChatData(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().GetChatData(rctx, fc.Args["chat_id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan []*model.ChatDetails):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalOChatDetails2ᚕᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetailsᚄ(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_GetChatData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "chat":
+				return ec.fieldContext_ChatDetails_chat(ctx, field)
+			case "sender":
+				return ec.fieldContext_ChatDetails_sender(ctx, field)
+			case "message":
+				return ec.fieldContext_ChatDetails_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChatDetails", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_GetChatData_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3969,6 +4099,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_CreateNewMessage(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4125,6 +4258,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	}
 
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "GetChatData":
+		return ec._Subscription_GetChatData(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var userImplementors = []string{"User"}
@@ -4530,6 +4683,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNChatDetails2githubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx context.Context, sel ast.SelectionSet, v model.ChatDetails) graphql.Marshaler {
+	return ec._ChatDetails(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx context.Context, sel ast.SelectionSet, v *model.ChatDetails) graphql.Marshaler {
@@ -5015,13 +5172,6 @@ func (ec *executionContext) marshalOChatDetails2ᚕᚖgithubᚗcomᚋliquedgit�
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalOChatDetails2ᚖgithubᚗcomᚋliquedgitᚋtokoMeLiaᚋgraphᚋmodelᚐChatDetails(ctx context.Context, sel ast.SelectionSet, v *model.ChatDetails) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ChatDetails(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
