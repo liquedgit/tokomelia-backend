@@ -63,7 +63,7 @@ func UserCreate(ctx context.Context, input model.NewUser) (*model.User, error) {
 	}
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
 	escapedToken := url.QueryEscape(encodedToken)
-	verifyEmailLink := "http://localhost:5173/verify/" + escapedToken
+	verifyEmailLink := helper.GoDotEnvVariables("ALLOWED_ORIGINS") + "/verify/" + escapedToken
 	SendMail(verifyEmailLink, input.Email)
 
 	return user, res.Error

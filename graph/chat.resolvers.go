@@ -44,7 +44,19 @@ func (r *mutationResolver) CreateNewMessage(ctx context.Context, message model.N
 		CreatedAt: time.Time{},
 	}
 
-	return newMessage, r.DB.Save(&newMessage).Error
+	err := r.DB.Save(&newMessage).Error
+
+	go func() {
+
+		var FetchAllChatDetails []*model.ChatDetails
+		r.DB.Find(&FetchAllChatDetails)
+
+		for _, subChannel := range r.SubscriptionChatChannel {
+			subChannel <- FetchAllChatDetails
+		}
+	}()
+
+	return newMessage, err
 }
 
 // GetAllChatData is the resolver for the GetAllChatData field.
@@ -55,22 +67,26 @@ func (r *queryResolver) GetAllChatData(ctx context.Context, chatID string) ([]*m
 // GetChatData is the resolver for the GetChatData field.
 func (r *subscriptionResolver) GetChatData(ctx context.Context, chatID string) (<-chan []*model.ChatDetails, error) {
 	ch := make(chan []*model.ChatDetails)
-	go func() {
-		for {
-			var newChatData []*model.ChatDetails
-			r.DB.Find(&newChatData, "chat_id = ?", chatID)
+	r.SubscriptionChatChannel = append(r.SubscriptionChatChannel, ch)
 
+	go func() {
+		var newChatData []*model.ChatDetails
+		r.DB.Find(&newChatData, "chat_id = ?", chatID)
+		ch <- newChatData
+		for {
 			select {
 			case <-ctx.Done():
+				for i, subChannel := range r.SubscriptionChatChannel {
+					if ch == subChannel {
+						r.SubscriptionChatChannel = append(r.SubscriptionChatChannel[:i], r.SubscriptionChatChannel[i+1:]...)
+						break
+					}
+				}
 				fmt.Println("Subscription Closed")
 				return
-
-			case ch <- newChatData:
-
 			}
 		}
 	}()
-
 	return ch, nil
 }
 
